@@ -47,21 +47,29 @@ cd jobradar
 npm install
 ```
 
-### 3. Get free Adzuna API credentials
+### 3. Configure environment variables
+
+```bash
+cp .env.example .env
+```
+
+Then open `.env` and fill in your Adzuna credentials (see step 4).
+
+### 4. Get free Adzuna API credentials
 
 1. Sign up at [developer.adzuna.com/signup](https://developer.adzuna.com/signup)
 2. Create a new application
-3. Copy your **App ID** and **App Key**
+3. Copy your **App ID** and **App Key** into `.env`
 
 > Free tier: 250 API hits/day, 25/minute — enough for active searching and several hourly monitors.
 
-### 4. Run the dev server
+### 5. Run the dev server
 
 ```bash
 npm run dev
 ```
 
-Open [http://localhost:5000](http://localhost:5000) and go to the **Setup** tab to enter your Adzuna credentials.
+Open [http://localhost:5000](http://localhost:5000) and go to the **Setup** tab to confirm your Adzuna credentials are loaded.
 
 ---
 
