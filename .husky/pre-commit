@@ -1,0 +1,29 @@
+#!/bin/sh
+
+# Block commits that include node_modules
+if git diff --cached --name-only | grep -q "^node_modules/"; then
+  echo ""
+  echo "❌ ERROR: You are trying to commit files inside node_modules/"
+  echo ""
+  echo "   node_modules should never be committed."
+  echo "   Make sure your .gitignore is working:"
+  echo ""
+  echo "     git rm -r --cached node_modules/"
+  echo "     git add .gitignore"
+  echo "     git commit -m 'chore: untrack node_modules'"
+  echo ""
+  exit 1
+fi
+
+# Block commits that include dist/
+if git diff --cached --name-only | grep -q "^dist/"; then
+  echo ""
+  echo "❌ ERROR: You are trying to commit files inside dist/"
+  echo ""
+  echo "   The dist/ build output should never be committed."
+  echo "   Make sure dist/ is in your .gitignore."
+  echo ""
+  exit 1
+fi
+
+echo "✅ Pre-commit check passed."
