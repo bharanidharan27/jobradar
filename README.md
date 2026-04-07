@@ -1,5 +1,7 @@
 # JobRadar 📡
 
+[![CI](https://github.com/bharanidharan27/jobradar/actions/workflows/ci.yml/badge.svg)](https://github.com/bharanidharan27/jobradar/actions/workflows/ci.yml)
+
 A full-stack job search and auto-polling web app powered by the [Adzuna API](https://developer.adzuna.com). Search millions of real job listings, bookmark roles, and set up background monitors that alert you when new jobs appear.
 
 ---
