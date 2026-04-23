@@ -19,7 +19,8 @@ export interface AdzunaJob {
 }
 
 export interface AdzunaSearchParams {
-  what: string;         // keywords / job title
+  what: string;         // primary job title / short keyword phrase
+  what_or?: string;     // space-separated skills — match any (Adzuna OR logic)
   where?: string;       // location
   country?: string;     // us, gb, au, etc.
   results_per_page?: number;
@@ -53,6 +54,7 @@ export async function searchAdzuna(
   url.searchParams.set("content-type", "application/json");
 
   if (params.what) url.searchParams.set("what", params.what);
+  if (params.what_or) url.searchParams.set("what_or", params.what_or);
   if (params.where) url.searchParams.set("where", params.where);
   if (params.full_time) url.searchParams.set("full_time", "1");
   if (params.part_time) url.searchParams.set("part_time", "1");

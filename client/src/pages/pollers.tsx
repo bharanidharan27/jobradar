@@ -18,6 +18,7 @@ interface PollEvent {
   configName: string;
   newCount: number;
   timestamp: string;
+  error?: string;
 }
 
 export default function PollersPage() {
@@ -162,13 +163,19 @@ export default function PollersPage() {
           </div>
           <div className="space-y-2">
             {events.map((evt, i) => (
-              <div key={i} className="flex items-center justify-between text-sm px-4 py-2.5 bg-muted/40 rounded-lg border border-border">
-                <div className="flex items-center gap-2">
-                  <span className="font-medium">{evt.configName}</span>
+              <div key={i} className={`flex items-center justify-between text-sm px-4 py-2.5 rounded-lg border ${
+                evt.error ? "bg-destructive/10 border-destructive/30" : "bg-muted/40 border-border"
+              }`}>
+                <div className="flex items-center gap-2 min-w-0">
+                  <span className="font-medium truncate">{evt.configName}</span>
                   <span className="text-muted-foreground">→</span>
-                  <span className="font-mono font-medium text-primary">{evt.newCount.toLocaleString()} jobs</span>
+                  {evt.error ? (
+                    <span className="font-mono font-medium text-destructive truncate max-w-xs" title={evt.error}>Error: {evt.error.slice(0, 60)}{evt.error.length > 60 ? "…" : ""}</span>
+                  ) : (
+                    <span className="font-mono font-medium text-primary">{evt.newCount.toLocaleString()} jobs</span>
+                  )}
                 </div>
-                <span className="text-xs text-muted-foreground">{formatDistanceToNow(new Date(evt.timestamp), { addSuffix: true })}</span>
+                <span className="text-xs text-muted-foreground shrink-0 ml-2">{formatDistanceToNow(new Date(evt.timestamp), { addSuffix: true })}</span>
               </div>
             ))}
           </div>
