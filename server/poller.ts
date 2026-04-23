@@ -10,7 +10,29 @@ type PollEvent = {
   configName: string;
   newCount: number;
   timestamp: string;
+  error?: string;
 };
+
+/**
+ * Split a raw keywords string into a short job-title phrase and a list of
+ * supplementary skills for Adzuna's `what_or` (OR-match) parameter.
+ *
+ * Strategy:
+ *  - If the string contains commas, treat the FIRST token as the job title
+ *    and pass the remaining tokens (up to 10, space-joined) as `what_or`.
+ *  - If it's a short string (≤ 60 chars, no commas) use it directly as `what`.
+ */
+function splitKeywords(raw: string): { what: string; what_or?: string } {
+  const trimmed = raw.trim();
+  const parts = trimmed.split(",").map((p) => p.trim()).filter(Boolean);
+  if (parts.length <= 1 || trimmed.length <= 60) {
+    return { what: trimmed.slice(0, 100) };
+  }
+  const what = parts[0];
+  // Take up to 10 skill terms and space-join them for Adzuna `what_or`
+  const skills = parts.slice(1, 11).join(" ");
+  return { what, what_or: skills };
+}
 
 const recentEvents: PollEvent[] = [];
 const MAX_EVENTS = 50;
@@ -49,8 +71,10 @@ async function runDuePolls(appId: string, appKey: string) {
     if (!isDue) continue;
 
     try {
+      const { what, what_or } = splitKeywords(config.keywords);
       const params: any = {
-        what: config.keywords,
+        what,
+        what_or,
         where: config.location,
         country: config.country,
         max_days_old: config.maxDaysOld || 7,
@@ -78,6 +102,14 @@ async function runDuePolls(appId: string, appKey: string) {
       broadcastEvent(event);
     } catch (err) {
       console.error(`Poll failed for config ${config.id}:`, err);
+      // Surface the error in the UI via SSE so it's visible
+      broadcastEvent({
+        configId: config.id,
+        configName: config.name,
+        newCount: 0,
+        timestamp: now.toISOString(),
+        error: err instanceof Error ? err.message : String(err),
+      });
     }
   }
 }
