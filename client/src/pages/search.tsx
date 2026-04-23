@@ -202,11 +202,16 @@ export default function SearchPage() {
       ) : data && submitted ? (
         <>
           <div className="flex items-center justify-between">
-            <p className="text-sm text-muted-foreground">
+            <p className="text-sm text-muted-foreground flex items-center gap-2">
               <span className="font-semibold text-foreground font-mono">
                 {data.count?.toLocaleString() || 0}
               </span>{" "}
               jobs found
+              {data.fromCache && (
+                <span className="inline-flex items-center gap-1 text-xs px-1.5 py-0.5 rounded bg-muted text-muted-foreground" title="Results served from cache — no API quota used">
+                  ⚡ cached
+                </span>
+              )}
             </p>
             {data.count > 20 && (
               <div className="flex items-center gap-2 text-sm">
