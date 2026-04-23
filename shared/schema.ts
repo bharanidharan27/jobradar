@@ -33,6 +33,15 @@ export const pollConfigs = sqliteTable("poll_configs", {
   isActive: integer("is_active", { mode: "boolean" }).notNull().default(true),
 });
 
+// Search result cache — keyed by a hash of query params, TTL 15 minutes
+export const searchCache = sqliteTable("search_cache", {
+  cacheKey: text("cache_key").primaryKey(),   // SHA-like hash of sorted params
+  results:  text("results").notNull(),         // JSON-stringified AdzunaSearchResult
+  cachedAt: text("cached_at").notNull(),       // ISO timestamp
+});
+
+export type SearchCache = typeof searchCache.$inferSelect;
+
 // Insert schemas
 export const insertSavedJobSchema = createInsertSchema(savedJobs).omit({
   id: true,

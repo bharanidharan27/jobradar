@@ -57,24 +57,29 @@ export function registerRoutes(httpServer: Server, app: Express) {
     } = req.query as Record<string, string>;
 
     try {
-      const result = await searchAdzuna(
-        {
-          what,
-          where,
-          country,
-          full_time: full_time === "1",
-          part_time: part_time === "1",
-          permanent: permanent === "1",
-          contract: contract === "1",
-          max_days_old: max_days_old ? parseInt(max_days_old) : undefined,
-          salary_min: salary_min ? parseInt(salary_min) : undefined,
-          sort_by: sort_by as any,
-          results_per_page: 20,
-          page: parseInt(page),
-        },
-        appId,
-        appKey
-      );
+      const searchParams = {
+        what,
+        where,
+        country,
+        full_time: full_time === "1",
+        part_time: part_time === "1",
+        permanent: permanent === "1",
+        contract: contract === "1",
+        max_days_old: max_days_old ? parseInt(max_days_old) : undefined,
+        salary_min: salary_min ? parseInt(salary_min) : undefined,
+        sort_by: sort_by as any,
+        results_per_page: 20,
+        page: parseInt(page),
+      };
+
+      // Check cache first — avoids burning an Adzuna request for repeat searches
+      let result = storage.getCached(searchParams);
+      let fromCache = true;
+      if (!result) {
+        fromCache = false;
+        result = await searchAdzuna(searchParams, appId, appKey);
+        storage.setCached(searchParams, result);
+      }
 
       // Enrich each job with saved status
       const savedIds = new Set(storage.getSavedJobs().map((j) => j.adzunaId));
@@ -85,7 +90,7 @@ export function registerRoutes(httpServer: Server, app: Express) {
         isSaved: savedIds.has(job.id),
       }));
 
-      res.json({ count: result.count, results: enriched });
+      res.json({ count: result.count, results: enriched, fromCache });
     } catch (err: any) {
       res.status(500).json({ error: err.message });
     }

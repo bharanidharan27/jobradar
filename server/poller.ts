@@ -90,7 +90,12 @@ async function runDuePolls(appId: string, appKey: string) {
       }
       if (config.salaryMin) params.salary_min = config.salaryMin;
 
-      const result = await searchAdzuna(params, appId, appKey);
+      // Use cache — if a manual search already fetched this query recently, reuse it
+      let result = storage.getCached(params);
+      if (!result) {
+        result = await searchAdzuna(params, appId, appKey);
+        storage.setCached(params, result);
+      }
       storage.updateLastPolled(config.id, now.toISOString());
 
       const event: PollEvent = {
