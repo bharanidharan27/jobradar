@@ -33,6 +33,17 @@ export const pollConfigs = sqliteTable("poll_configs", {
   isActive: integer("is_active", { mode: "boolean" }).notNull().default(true),
 });
 
+// Poll run history — last 10 results per monitor
+export const pollResults = sqliteTable("poll_results", {
+  id:         integer("id").primaryKey({ autoIncrement: true }),
+  configId:   integer("config_id").notNull(),
+  jobCount:   integer("job_count").notNull().default(0),
+  error:      text("error"),
+  polledAt:   text("polled_at").notNull(),
+});
+
+export type PollResult = typeof pollResults.$inferSelect;
+
 // Search result cache — keyed by a hash of query params, TTL 15 minutes
 export const searchCache = sqliteTable("search_cache", {
   cacheKey: text("cache_key").primaryKey(),   // SHA-like hash of sorted params

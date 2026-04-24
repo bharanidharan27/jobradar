@@ -41,6 +41,13 @@ sqlite.exec(`
     results   TEXT NOT NULL,
     cached_at TEXT NOT NULL
   );
+  CREATE TABLE IF NOT EXISTS poll_results (
+    id         INTEGER PRIMARY KEY AUTOINCREMENT,
+    config_id  INTEGER NOT NULL,
+    job_count  INTEGER NOT NULL DEFAULT 0,
+    error      TEXT,
+    polled_at  TEXT NOT NULL
+  );
 `);
 
 const CACHE_TTL_MS = 15 * 60 * 1000; // 15 minutes
@@ -56,6 +63,10 @@ function makeCacheKey(params: AdzunaSearchParams): string {
 }
 
 export interface IStorage {
+  // Poll history
+  savePollResult(configId: number, jobCount: number, error?: string): void;
+  getPollHistory(configId: number): schema.PollResult[];
+
   // Search cache
   getCached(params: AdzunaSearchParams): AdzunaSearchResult | null;
   setCached(params: AdzunaSearchParams, result: AdzunaSearchResult): void;
@@ -78,6 +89,32 @@ export interface IStorage {
 }
 
 export class SQLiteStorage implements IStorage {
+  // ── Poll history ──────────────────────────────────────────────────────────────────
+
+  savePollResult(configId: number, jobCount: number, error?: string): void {
+    db.insert(schema.pollResults)
+      .values({ configId, jobCount, error: error ?? null, polledAt: new Date().toISOString() })
+      .run();
+    // Keep only the last 10 rows for this config
+    sqlite.prepare(`
+      DELETE FROM poll_results
+      WHERE config_id = ?
+        AND id NOT IN (
+          SELECT id FROM poll_results
+          WHERE config_id = ?
+          ORDER BY polled_at DESC
+          LIMIT 10
+        )
+    `).run(configId, configId);
+  }
+
+  getPollHistory(configId: number): schema.PollResult[] {
+    return db.select().from(schema.pollResults)
+      .where(eq(schema.pollResults.configId, configId))
+      .orderBy(desc(schema.pollResults.polledAt))
+      .all();
+  }
+
   // ── Cache ──────────────────────────────────────────────────────────────────
 
   getCached(params: AdzunaSearchParams): AdzunaSearchResult | null {
