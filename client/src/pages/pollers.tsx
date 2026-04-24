@@ -163,16 +163,29 @@ export default function PollersPage() {
           </div>
           <div className="space-y-2">
             {events.map((evt, i) => (
-              <div key={i} className={`flex items-center justify-between text-sm px-4 py-2.5 rounded-lg border ${
-                evt.error ? "bg-destructive/10 border-destructive/30" : "bg-muted/40 border-border"
-              }`}>
+              <div
+                key={i}
+                className={`flex items-center justify-between text-sm px-4 py-2.5 rounded-lg border transition-colors ${
+                  evt.error
+                    ? "bg-destructive/10 border-destructive/30"
+                    : "bg-muted/40 border-border hover:bg-muted cursor-pointer"
+                }`}
+                onClick={() => {
+                  if (!evt.error) {
+                    // Find the config for this event to get its keywords
+                    const cfg = configs?.find((c) => c.id === evt.configId);
+                    const q = encodeURIComponent(cfg?.keywords || evt.configName);
+                    window.location.hash = `/?q=${q}`;
+                  }
+                }}
+              >
                 <div className="flex items-center gap-2 min-w-0">
                   <span className="font-medium truncate">{evt.configName}</span>
                   <span className="text-muted-foreground">→</span>
                   {evt.error ? (
                     <span className="font-mono font-medium text-destructive truncate max-w-xs" title={evt.error}>Error: {evt.error.slice(0, 60)}{evt.error.length > 60 ? "…" : ""}</span>
                   ) : (
-                    <span className="font-mono font-medium text-primary">{evt.newCount.toLocaleString()} jobs</span>
+                    <span className="font-mono font-medium text-primary underline-offset-2 hover:underline">{evt.newCount.toLocaleString()} jobs</span>
                   )}
                 </div>
                 <span className="text-xs text-muted-foreground shrink-0 ml-2">{formatDistanceToNow(new Date(evt.timestamp), { addSuffix: true })}</span>
