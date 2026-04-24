@@ -162,6 +162,12 @@ export function registerRoutes(httpServer: Server, app: Express) {
     res.json({ ok: true });
   });
 
+  // Poll run history for a specific monitor
+  app.get("/api/poll-results/:configId", (req, res) => {
+    const configId = parseInt(req.params.configId);
+    res.json(storage.getPollHistory(configId));
+  });
+
   // SSE endpoint for real-time poll updates
   app.get("/api/poll-events", (req, res) => {
     res.setHeader("Content-Type", "text/event-stream");

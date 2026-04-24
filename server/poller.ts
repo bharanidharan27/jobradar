@@ -97,6 +97,7 @@ async function runDuePolls(appId: string, appKey: string) {
         storage.setCached(params, result);
       }
       storage.updateLastPolled(config.id, now.toISOString());
+      storage.savePollResult(config.id, result.count);
 
       const event: PollEvent = {
         configId: config.id,
@@ -107,13 +108,15 @@ async function runDuePolls(appId: string, appKey: string) {
       broadcastEvent(event);
     } catch (err) {
       console.error(`Poll failed for config ${config.id}:`, err);
+      const errMsg = err instanceof Error ? err.message : String(err);
+      storage.savePollResult(config.id, 0, errMsg);
       // Surface the error in the UI via SSE so it's visible
       broadcastEvent({
         configId: config.id,
         configName: config.name,
         newCount: 0,
         timestamp: now.toISOString(),
-        error: err instanceof Error ? err.message : String(err),
+        error: errMsg,
       });
     }
   }

@@ -8,10 +8,55 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Radio, Plus, Trash2, Clock, RefreshCw, Bell } from "lucide-react";
-import { formatDistanceToNow } from "date-fns";
-import type { PollConfig } from "@shared/schema";
+import { Radio, Plus, Trash2, Clock, RefreshCw, Bell, ChevronDown, ChevronUp } from "lucide-react";
+import { formatDistanceToNow, format } from "date-fns";
+import type { PollConfig, PollResult } from "@shared/schema";
 import { cn } from "@/lib/utils";
+
+// Expandable poll history for a single monitor
+function PollHistory({ configId }: { configId: number }) {
+  const [open, setOpen] = useState(false);
+  const { data: history = [], isLoading } = useQuery<PollResult[]>({
+    queryKey: ["/api/poll-results", configId],
+    queryFn: () => apiRequest("GET", `/api/poll-results/${configId}`).then((r) => r.json()),
+    enabled: open,
+    refetchInterval: open ? 60_000 : false,
+  });
+
+  return (
+    <div className="mt-2">
+      <button
+        onClick={() => setOpen((o) => !o)}
+        className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors"
+      >
+        {open ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
+        Poll history
+      </button>
+      {open && (
+        <div className="mt-2 space-y-1">
+          {isLoading && <p className="text-xs text-muted-foreground">Loading…</p>}
+          {!isLoading && history.length === 0 && (
+            <p className="text-xs text-muted-foreground">No history yet — waiting for first poll.</p>
+          )}
+          {history.map((r) => (
+            <div key={r.id} className={cn(
+              "flex items-center justify-between text-xs px-2 py-1 rounded",
+              r.error ? "bg-destructive/10 text-destructive" : "bg-muted/40 text-muted-foreground"
+            )}>
+              <span className="font-mono">
+                {format(new Date(r.polledAt), "MMM d, HH:mm")}
+              </span>
+              {r.error
+                ? <span className="truncate max-w-[200px]" title={r.error}>Error: {r.error.slice(0, 40)}</span>
+                : <span className="font-semibold text-foreground">{r.jobCount.toLocaleString()} jobs</span>
+              }
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
 
 interface PollEvent {
   configId: number;
@@ -132,6 +177,7 @@ export default function PollersPage() {
                       </span>
                     )}
                   </div>
+                  <PollHistory configId={cfg.id} />
                 </div>
               </div>
               <div className="flex items-center gap-2 shrink-0">
