@@ -23,8 +23,10 @@ const subscribe = (cb: () => void) => {
 };
 
 const getHashPath = () => {
-  // Strip ALL leading # and / characters, then prepend a single /
-  const path = "/" + location.hash.replace(/^#+\/*/, "");
+  // Strip ALL leading # and / chars, then prepend a single /
+  // Also strip any query string so the router only sees the clean path
+  const withQuery = "/" + location.hash.replace(/^#+\/*/, "");
+  const path = withQuery.split("?")[0] || "/";
   return path === "/" ? "/" : path;
 };
 
