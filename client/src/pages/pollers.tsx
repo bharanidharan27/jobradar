@@ -218,10 +218,14 @@ export default function PollersPage() {
                 }`}
                 onClick={() => {
                   if (!evt.error) {
-                    // Find the config for this event to get its keywords
                     const cfg = configs?.find((c) => c.id === evt.configId);
-                    const q = encodeURIComponent(cfg?.keywords || evt.configName);
-                    window.location.hash = `/?q=${q}`;
+                    // Use only the job title (first comma-token) — matches what the poller
+                    // actually sent to Adzuna so the 15-min cache is likely a hit
+                    const keywords = cfg?.keywords || evt.configName;
+                    const title = keywords.split(",")[0].trim();
+                    const params = new URLSearchParams({ q: title });
+                    if (cfg?.location) params.set("where", cfg.location);
+                    window.location.hash = `/?${params.toString()}`;
                   }
                 }}
               >
