@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import JobCard from "@/components/job-card";
@@ -42,10 +42,30 @@ interface Filters {
 }
 
 export default function SearchPage() {
-  const [what, setWhat] = useState("");
-  const [where, setWhere] = useState("");
-  const [submitted, setSubmitted] = useState(false);
+  // Read ?q= and ?where= from the hash query string (e.g. /#/search?q=Software+Engineer)
+  const hashSearch = window.location.hash.includes("?")
+    ? window.location.hash.slice(window.location.hash.indexOf("?"))
+    : "";
+  const initParams = new URLSearchParams(hashSearch);
+
+  const [what, setWhat] = useState(initParams.get("q") || "");
+  const [where, setWhere] = useState(initParams.get("where") || "");
+  const [submitted, setSubmitted] = useState(!!initParams.get("q"));
   const [showFilters, setShowFilters] = useState(false);
+
+  // Re-read params when hash changes (e.g. navigating from poll events while already on search page)
+  useEffect(() => {
+    const onHashChange = () => {
+      const hs = window.location.hash.includes("?")
+        ? window.location.hash.slice(window.location.hash.indexOf("?"))
+        : "";
+      const p = new URLSearchParams(hs);
+      const q = p.get("q");
+      if (q) { setWhat(q); setWhere(p.get("where") || ""); setSubmitted(true); setPage(1); }
+    };
+    window.addEventListener("hashchange", onHashChange);
+    return () => window.removeEventListener("hashchange", onHashChange);
+  }, []);
   const [page, setPage] = useState(1);
   const [filters, setFilters] = useState<Filters>({
     country: "us",
